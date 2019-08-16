@@ -159,7 +159,8 @@ class SignedData(object):
                 else:
                     no = max(ref.offsets.keys())
             size = max(size, no)
-        page = document.getobj(document.catalog['Pages'].objid)['Kids'][0].objid
+        page = document.getobj(document.catalog['Pages'].objid)[
+            'Kids'][0].objid
 
         nsig, fields = self.getfields(root, document)
         annots = self.getannots(page, document)
@@ -168,18 +169,24 @@ class SignedData(object):
         rootdata = self.getdata(pdfdata1, root, prev, document, ('AcroForm',))
         pagedata = self.getdata(pdfdata1, page, prev, document, ('Annots',))
 
+        rectPos = b'0 0 0 0'
+
+        if b'rectPos' in udct:
+            rectPos = udct[b'rectPos']
+
         no = size + 1
         objs = [
-            self.makeobj(page, (b'/Annots[%s%d 0 R]' %(
+            self.makeobj(page, (b'/Annots[%s%d 0 R]' % (
                 annots, no + 3) + pagedata)),
             self.makeobj(no + 0, infodata),
             self.makeobj(no + 1, (b'/AcroForm %d 0 R' % (no + 2)) + rootdata),
             self.makeobj(no + 2, b'/Fields[%s%d 0 R]/SigFlags %d' % (
                 fields,
                 no + 3, udct[b'sigflags'])),
-            self.makeobj(no + 3,
-                         b'/AP<</N %d 0 R>>/F 132/FT/Sig/P %d 0 R/Rect[0 0 0 0]/Subtype/Widget/T(Signature%d)/V %d 0 R' % (
-                             no + 4, page, nsig, no + 5)),
+            self.makeobj(
+                no + 3,
+                b'/AP<</N %d 0 R>>/F 132/FT/Sig/P %d 0 R/Rect[%s]/Subtype/Widget/T(Signature%d)/V %d 0 R' % (
+                    no + 4, page, rectPos, nsig, no + 5)),
             self.makeobj(no + 4, b'/BBox[0 0 0 0]/Filter/FlateDecode/Length 8/Subtype/Form/Type/XObject',
                          b'stream\n\x78\x9C\x03\x00\x00\x00\x00\x01\nendstream\n'),
             self.makeobj(no + 5, (b'/ByteRange [0000000000 0000000000 0000000000 0000000000]/ContactInfo(%s)\
@@ -243,7 +250,8 @@ startxref\n\
         startxref = len(datau)
         pdfbr1 = pdfdata2.find(zeros)
         pdfbr2 = pdfbr1 + len(zeros)
-        br = [0, startxref + pdfbr1 - 1, startxref + pdfbr2 + 1, len(pdfdata2) - pdfbr2 - 1]
+        br = [0, startxref + pdfbr1 - 1, startxref +
+              pdfbr2 + 1, len(pdfdata2) - pdfbr2 - 1]
         brfrom = b'[0000000000 0000000000 0000000000 0000000000]'
         brto = b'[%010d %010d %010d %010d]' % tuple(br)
         pdfdata2 = pdfdata2.replace(brfrom, brto, 1)
@@ -256,7 +264,8 @@ startxref\n\
         md.update(b2)
         md = md.digest()
 
-        contents = signer.sign(None, key, cert, othercerts, algomd, True, md, hsm)
+        contents = signer.sign(
+            None, key, cert, othercerts, algomd, True, md, hsm)
         contents = self.aligned(contents)
         pdfdata2 = pdfdata2.replace(zeros, contents, 1)
 

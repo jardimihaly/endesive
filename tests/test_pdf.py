@@ -22,13 +22,16 @@ class PDFTests(unittest.TestCase):
             b'location': b'Szczecin',
             b'signingdate': b'20180731082642+02\'00\'',
             b'reason': b'Dokument podpisany cyfrowo',
+            b'rectPos': b'100 100 200 200'
         }
         with open(fixture('demo2_user1.p12'), 'rb') as fh:
             p12 = load_pkcs12(fh.read(), b'1234')
         fname = fixture('pdf.pdf')
         with open(fname, 'rb') as fh:
             datau = fh.read()
-        datas = pdf.cms.sign(datau, dct,
+        datas = pdf.cms.sign(
+            datau,
+            dct,
             p12.get_privatekey().to_cryptography_key(),
             p12.get_certificate().to_cryptography(),
             [],
